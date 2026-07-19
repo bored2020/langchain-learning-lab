@@ -267,23 +267,23 @@
             <div class="trace-list">
               <article class="trace-step active" data-trace-step="0">
                 <span class="trace-dot">1</span>
-                <div><small>USER → AGENT</small><b>“上海今天穿什么？”</b><p>用户提出一个需要实时信息的问题。</p></div>
+                <div><small>USER → AGENT</small><b>“广州现在天气怎么样？应该穿什么？”</b><p>用户提出一个需要实时信息的问题。</p></div>
               </article>
               <article class="trace-step" data-trace-step="1">
                 <span class="trace-dot">2</span>
-                <div><small>MODEL → DECISION</small><b>不能凭空回答，需要查天气</b><p>模型根据工具描述，生成结构化工具调用。</p></div>
+                <div><small>MODEL → DECISION</small><b>生成 tool_calls：city="广州"</b><p>模型根据用户消息和工具 Schema 提取城市参数。</p></div>
               </article>
               <article class="trace-step" data-trace-step="2">
                 <span class="trace-dot">3</span>
-                <div><small>AGENT → TOOL</small><b>get_weather(city="上海")</b><p>运行时真正执行 Python 函数。</p></div>
+                <div><small>AGENT → TOOL</small><b>get_weather(city="广州")</b><p>运行时先查广州经纬度，再请求实时天气。</p></div>
               </article>
               <article class="trace-step" data-trace-step="3">
                 <span class="trace-dot">4</span>
-                <div><small>TOOL → AGENT</small><b>“18°C，小雨，东北风 3 级”</b><p>工具结果作为新消息放回上下文。</p></div>
+                <div><small>TOOL → AGENT</small><b>{"city":"广州","temperature_celsius":...}</b><p>实时结果被包装成 ToolMessage 放回上下文。</p></div>
               </article>
               <article class="trace-step" data-trace-step="4">
                 <span class="trace-dot">5</span>
-                <div><small>MODEL → USER</small><b>“建议穿薄外套，并带伞。”</b><p>模型读到观察结果，组织最终答案并结束循环。</p></div>
+                <div><small>MODEL → USER</small><b>根据实时数据给出天气与穿衣建议</b><p>模型读到工具结果，组织最终答案并结束循环。</p></div>
               </article>
             </div>
           </div>
@@ -451,11 +451,11 @@ source .venv/bin/activate</code></pre>
             <div class="step-rail"><span>02</span><i></i></div>
             <div class="step-content">
               <p class="step-kicker">安装依赖</p>
-              <h3>核心框架 + 模型适配器</h3>
-              <p><code>langchain</code> 提供 Agent 抽象；<code>langchain-openai</code> 负责连接 OpenAI 模型；<code>python-dotenv</code> 从本地文件读取密钥。</p>
+              <h3>核心框架 + 模型适配器 + HTTP 客户端</h3>
+              <p><code>langchain</code> 提供 Agent 抽象；<code>langchain-openai</code> 连接模型；<code>requests</code> 负责访问城市与天气接口；<code>python-dotenv</code> 读取密钥。</p>
               <div class="code-block" data-code-block>
                 <div class="code-head"><span>TERMINAL</span><button type="button" data-copy>复制</button></div>
-                <pre><code>python -m pip install -U langchain langchain-openai python-dotenv</code></pre>
+                <pre><code>python -m pip install -U langchain langchain-openai python-dotenv requests</code></pre>
               </div>
               <div class="concept-line"><b>为什么拆包？</b><span>框架与模型厂商适配器独立升级，替换模型时更轻量。</span></div>
             </div>
@@ -481,46 +481,135 @@ OPENAI_MODEL=gpt-5-nano</code></pre>
             <div class="step-content">
               <p class="step-kicker">编写程序</p>
               <h3>创建 <code>main.py</code></h3>
-              <p>下面只有四件事：加载配置、定义工具、创建 Agent、发送消息。</p>
+              <p>代码中的 ①–⑦ 依次展示：工具 Schema 如何生成、广州如何进入参数、真实 API 如何被调用，以及 ToolMessage 如何回到模型。</p>
               <div class="code-block featured-code" data-code-block>
                 <div class="code-head"><span>MAIN.PY</span><button type="button" data-copy>复制</button></div>
-                <pre class="line-numbers"><code><span><i>01</i>import os</span>
-<span><i>02</i>from dotenv import load_dotenv</span>
-<span><i>03</i>from langchain.agents import create_agent</span>
-<span><i>04</i>from langchain.tools import tool</span>
-<span><i>05</i>from langchain_openai import ChatOpenAI</span>
-<span><i>06</i></span>
-<span><i>07</i>load_dotenv()</span>
-<span><i>08</i></span>
-<span><i>09</i>@tool</span>
-<span><i>10</i>def get_weather(city: str) -&gt; str:</span>
-<span><i>11</i>    """查询指定城市的天气。"""</span>
-<span><i>12</i>    weather = {</span>
-<span><i>13</i>        "上海": "18°C，小雨，东北风 3 级",</span>
-<span><i>14</i>        "北京": "12°C，晴，西北风 2 级",</span>
-<span><i>15</i>    }</span>
-<span><i>16</i>    return weather.get(city, f"暂时没有{city}的天气数据")</span>
-<span><i>17</i></span>
-<span><i>18</i>model = ChatOpenAI(</span>
-<span><i>19</i>    model=os.getenv("OPENAI_MODEL", "gpt-5-nano")</span>
-<span><i>20</i>)</span>
-<span><i>21</i></span>
-<span><i>22</i>agent = create_agent(</span>
-<span><i>23</i>    model=model,</span>
-<span><i>24</i>    tools=[get_weather],</span>
-<span><i>25</i>    system_prompt=(</span>
-<span><i>26</i>        "你是穿衣助手。遇到天气问题必须先调用工具，"</span>
-<span><i>27</i>        "再根据结果给出一句简洁建议。"</span>
-<span><i>28</i>    ),</span>
-<span><i>29</i>)</span>
-<span><i>30</i></span>
-<span><i>31</i>result = agent.invoke({</span>
-<span><i>32</i>    "messages": [</span>
-<span><i>33</i>        {"role": "user", "content": "上海今天穿什么？"}</span>
-<span><i>34</i>    ]</span>
-<span><i>35</i>})</span>
-<span><i>36</i></span>
-<span><i>37</i>print(result["messages"][-1].content)</span></code></pre>
+                <pre><code>import json
+import os
+
+import requests
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain.tools import tool
+from langchain_openai import ChatOpenAI
+
+load_dotenv()
+
+GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
+FORECAST_URL = "https://api.open-meteo.com/v1/forecast"
+WEATHER_CODES = {
+    0: "晴朗", 1: "大致晴朗", 2: "局部多云", 3: "阴天",
+    45: "有雾", 61: "小雨", 63: "中雨", 65: "大雨",
+    80: "小阵雨", 81: "中等阵雨", 82: "强阵雨", 95: "雷雨",
+}
+
+# ① @tool 读取函数名、docstring 和 city: str，生成工具 Schema。
+@tool
+def get_weather(city: str) -&gt; str:
+    """查询指定城市的实时天气。
+
+    Args:
+        city: 用户明确提出的城市名，例如“广州”。
+    """
+    city = city.strip()
+    if not city:
+        return json.dumps({"error": "城市名不能为空"}, ensure_ascii=False)
+
+    try:
+        # ② 函数收到的已是 city="广州"，先将城市转换成经纬度。
+        location_response = requests.get(
+            GEOCODING_URL,
+            params={"name": city, "count": 1, "language": "zh", "format": "json"},
+            timeout=10,
+        )
+        location_response.raise_for_status()
+        locations = location_response.json().get("results", [])
+
+        if not locations:
+            return json.dumps({"error": f"没有找到城市：{city}"}, ensure_ascii=False)
+
+        location = locations[0]
+
+        # ③ 使用广州的经纬度请求实时天气，没有写死温度和天气。
+        weather_response = requests.get(
+            FORECAST_URL,
+            params={
+                "latitude": location["latitude"],
+                "longitude": location["longitude"],
+                "current": (
+                    "temperature_2m,apparent_temperature,"
+                    "precipitation,weather_code,wind_speed_10m"
+                ),
+                "timezone": location["timezone"],
+            },
+            timeout=10,
+        )
+        weather_response.raise_for_status()
+        current = weather_response.json()["current"]
+    except requests.RequestException as error:
+        return json.dumps(
+            {"error": f"天气服务请求失败：{error}"},
+            ensure_ascii=False,
+        )
+
+    # ④ 只返回结构化事实；Agent 会把字符串包装成 ToolMessage。
+    return json.dumps(
+        {
+            "city": location["name"],
+            "province": location.get("admin1"),
+            "observation_time": current["time"],
+            "weather": WEATHER_CODES.get(
+                current["weather_code"],
+                f"天气代码 {current['weather_code']}",
+            ),
+            "temperature_celsius": current["temperature_2m"],
+            "apparent_temperature_celsius": current["apparent_temperature"],
+            "precipitation_mm": current["precipitation"],
+            "wind_speed_kmh": current["wind_speed_10m"],
+        },
+        ensure_ascii=False,
+    )
+
+model = ChatOpenAI(
+    model=os.getenv("OPENAI_MODEL", "gpt-5-nano")
+)
+
+# ⑤ 注册工具：Schema 给模型看，Python 函数交给 Agent 运行时。
+# create_agent 内部的派发过程可理解为下面这段伪代码：
+# tools_by_name = {get_weather.name: get_weather}
+# call = ai_message.tool_calls[0]                 # args={"city": "广州"}
+# selected_tool = tools_by_name[call["name"]]    # 按名称找到 Python 函数
+# tool_result = selected_tool.invoke(call["args"])  # 传入 city="广州"
+# messages.append(
+#     ToolMessage(content=tool_result, tool_call_id=call["id"])
+# )  # 把结果与本次调用关联，再交给模型
+    model=model,
+
+agent = create_agent(
+    tools=[get_weather],
+    system_prompt=(
+        "你是天气与穿衣助手。天气问题必须调用 get_weather，"
+        "不能根据记忆猜测。没有城市时先追问。"
+    ),
+)
+
+# ⑥ 模型读到“广州”，生成 get_weather(city="广州")。
+result = agent.invoke({
+    "messages": [{
+        "role": "user",
+        "content": "广州现在天气怎么样？应该穿什么？",
+    }]
+})
+
+# ⑦ 打印 HumanMessage → tool_calls → ToolMessage → 最终 AIMessage。
+for message in result["messages"]:
+    tool_calls = getattr(message, "tool_calls", None)
+    if tool_calls:
+        print("模型生成工具调用：", tool_calls)
+    elif type(message).__name__ == "ToolMessage":
+        print("工具返回实时数据：", message.content)
+
+print("最终回答：", result["messages"][-1].content)</code></pre>
               </div>
             </div>
           </article>
@@ -537,10 +626,12 @@ OPENAI_MODEL=gpt-5-nano</code></pre>
               <div class="terminal-output">
                 <div class="terminal-dots"><i></i><i></i><i></i><span>EXPECTED OUTPUT</span></div>
                 <p><span>$</span> python main.py</p>
-                <p class="terminal-answer">上海今天 18°C 且有小雨，建议穿薄外套并带伞。</p>
+                <p class="terminal-answer">AIMessage 生成工具调用：[{'name': 'get_weather', 'args': {'city': '广州'}}]</p>
+                <p class="terminal-answer">ToolMessage 返回天气数据：{"city":"广州","temperature_celsius":...}</p>
+                <p class="terminal-answer">广州当前天气……建议根据实时温度选择透气衣物。</p>
                 <i class="cursor"></i>
               </div>
-              <p class="output-note">文字不必一模一样。大模型输出具有随机性；只要答案使用了工具返回的天气并给出穿衣建议，就算成功。</p>
+              <p class="output-note">温度和文字会随时间变化。成功标准是轨迹中出现 <code>city="广州"</code> 的工具调用、真实 ToolMessage，以及基于该数据生成的最终建议。</p>
             </div>
           </article>
         </div>
@@ -568,32 +659,39 @@ OPENAI_MODEL=gpt-5-nano</code></pre>
           <details open>
             <summary><span>01</span><b><code>@tool</code> 到底做了什么？</b><i>+</i></summary>
             <div class="details-body">
-              <p>它把普通 Python 函数包装成模型可理解的工具规范，包含名称、用途和参数结构。模型不会直接执行函数，而是先生成“我要调用 get_weather，参数是上海”的结构化请求；Agent 运行时再负责真正执行。</p>
+              <p>它把普通 Python 函数包装成模型可理解的工具规范，包含名称、用途和参数结构。模型不会直接执行函数，而是根据“广州现在天气怎么样”生成 <code>{"name":"get_weather","args":{"city":"广州"}}</code>；Agent 运行时再负责真正执行。</p>
               <div class="data-flow"><span>函数签名</span><b>→</b><span>JSON Schema</span><b>→</b><span>模型决策</span><b>→</b><span>Python 执行</span></div>
             </div>
           </details>
           <details>
             <summary><span>02</span><b><code>create_agent()</code> 创建了什么？</b><i>+</i></summary>
             <div class="details-body">
-              <p>它创建的是一个基于 LangGraph 的执行图。核心循环是：调用模型 → 检查是否有工具调用 → 执行工具 → 把结果追加为消息 → 再次调用模型，直到模型产出最终回答。</p>
+              <p>它创建一个基于 LangGraph 的执行图，并建立工具名称到 Python 函数的映射。核心循环是：调用模型 → 检查 <code>AIMessage.tool_calls</code> → 用 <code>args={"city":"广州"}</code> 调用工具 → 追加 ToolMessage → 再次调用模型，直到没有新的工具调用。</p>
             </div>
           </details>
           <details>
             <summary><span>03</span><b><code>invoke()</code> 的输入输出是什么？</b><i>+</i></summary>
             <div class="details-body">
-              <p>输入是状态字典，这里至少包含 <code>messages</code>。输出仍是状态字典，其中 <code>messages</code> 已追加模型决策、工具结果和最终回答。最后一个消息通常就是交付给用户的 AIMessage。</p>
+              <p>输入是包含 HumanMessage 的状态字典。输出仍是状态字典，但 <code>messages</code> 已依次追加带 tool_calls 的 AIMessage、包含实时 JSON 的 ToolMessage，以及最终 AIMessage。代码中的循环把这四类消息逐条打印出来。</p>
             </div>
           </details>
           <details>
-            <summary><span>04</span><b>为什么示例工具使用假数据？</b><i>+</i></summary>
+            <summary><span>04</span><b><code>get_weather("广州")</code> 内部做了什么？</b><i>+</i></summary>
             <div class="details-body">
-              <p>为了把变量控制在最少。你此刻只需验证 Agent 是否会选工具、传参数、读取结果。掌握循环后，再把函数体换成真实天气 API；Agent 其余部分不用改变。</p>
+              <p>函数先请求地理编码服务，把“广州”转换为纬度、经度和时区；再用这些坐标请求实时天气。它最终返回 JSON 字符串，而不是自己编写穿衣建议。事实由工具提供，表达与建议由模型完成。</p>
+              <div class="data-flow"><span>广州</span><b>→</b><span>23.11667, 113.25</span><b>→</b><span>实时天气 JSON</span><b>→</b><span>ToolMessage</span></div>
+            </div>
+          </details>
+          <details>
+            <summary><span>05</span><b>为什么工具返回 JSON，而不是一段漂亮文字？</b><i>+</i></summary>
+            <div class="details-body">
+              <p>JSON 能保留城市、观测时间、温度、体感温度、降水和风速的字段边界，方便模型和程序可靠读取。工具负责返回可验证的事实，模型再根据系统提示把事实组织成人类易读的回答。</p>
             </div>
           </details>
         </div>
 
         <div class="quiz reveal" data-quiz>
-          <div class="quiz-heading"><span>3 MIN CHECK</span><h3>确认你真的理解了</h3><p>如果用户问“北京天气”，究竟是谁执行 <code>get_weather</code>？</p></div>
+          <div class="quiz-heading"><span>3 MIN CHECK</span><h3>确认你真的理解了</h3><p>用户问“广州天气”后，究竟是谁执行 <code>get_weather(city="广州")</code>？</p></div>
           <div class="quiz-options">
             <button type="button" data-answer="wrong"><span>A</span>模型服务器直接执行</button>
             <button type="button" data-answer="right"><span>B</span>本地的 Agent 运行时执行</button>

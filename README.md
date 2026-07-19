@@ -1,6 +1,6 @@
 # LangChain 学习实验室
 
-一份中文交互式入门网页，以及一个可直接运行的最小 LangChain Agent。
+一份中文交互式入门网页，以及一个可直接运行的最小 LangChain Agent。示例会让模型从问题中提取“广州”，再通过 Open-Meteo 地理编码与天气接口查询实时数据；天气接口不需要额外的 API Key。
 
 ## 打开课程网页
 
@@ -40,7 +40,7 @@ langchain-learning-lab/
 ├── book-theme.css      # 教材式阅读主题与响应式排版
 ├── script.js           # 原理演示、复制按钮、进度保存、测验
 └── example/
-    ├── main.py         # 最小工具调用 Agent
+    ├── main.py         # 广州实时天气工具调用 Agent
     ├── requirements.txt
     ├── .env.example
     └── .gitignore
