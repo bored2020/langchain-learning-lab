@@ -2718,3 +2718,173 @@ html[data-theme="dark"] .parameter-rule {
     gap: 4px;
   }
 }
+
+/* 舒适阅读字号：正文保持清晰，辅助标签仍保留视觉层级。 */
+:root {
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
+    "Noto Sans CJK SC", "Source Han Sans SC", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  --reading-size: 16px;
+  --reading-leading: 1.8;
+}
+
+body {
+  font-size: 17px;
+  line-height: var(--reading-leading);
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 导航保持紧凑，但不再需要眯眼阅读。 */
+.mobile-header .brand,
+.sidebar .brand {
+  font-size: 14px;
+}
+
+.toc a {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.toc a span,
+.page-outline a,
+.progress-label,
+.reset-progress {
+  font-size: 12px;
+}
+
+.page-outline strong {
+  font-size: 13px;
+}
+
+/* 课程正文统一到适合长时间阅读的 16px。 */
+.hero-lede,
+.learning-contract li,
+.section-intro,
+.definition-card p:last-child,
+.problem-card p,
+.note p,
+.component-detail p,
+.under-hood p,
+.ecosystem-row span,
+.loop-explainer > p:not(.kicker):not(.microcopy),
+.warning-card p,
+.step-content > p:not(.step-kicker):not(.windows-tip):not(.output-note),
+.details-body,
+.quiz-heading p,
+.roadmap-item p,
+.practice-card p {
+  font-size: var(--reading-size);
+  line-height: var(--reading-leading);
+}
+
+.chapter h2 {
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+}
+
+.problem-card h3,
+.component-detail h3,
+.under-hood h3,
+.step-content h3 {
+  line-height: 1.4;
+}
+
+.trace-step b {
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.trace-step p,
+.pipeline-node span,
+.ecosystem-caption,
+.microcopy {
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* 构建步骤里的补充说明也应当能自然扫读。 */
+.windows-tip,
+.output-note,
+.concept-line,
+.security-note,
+.build-summary b,
+.download-note a {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.decode-list summary b {
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.quiz-options button {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.quiz-feedback,
+.roadmap-item > b,
+.practice-card ol,
+.references p,
+.references a,
+.site-footer b,
+.site-footer p,
+.site-footer a {
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+/* 代码字号独立控制，兼顾可读性与横向空间。 */
+code {
+  font-size: 0.92em;
+}
+
+.code-block pre {
+  font-size: 13px;
+  line-height: 1.75;
+  tab-size: 4;
+}
+
+.terminal-output {
+  font-size: 12.5px;
+  line-height: 1.75;
+}
+
+.code-head,
+.code-head button,
+.terminal-dots span {
+  font-size: 10px;
+}
+
+/* “工具参数来源”一节原本最小只有 8–10px，单独提升其信息密度文字。 */
+.parameter-heading p:last-child,
+.responsibility-strip p,
+.argument-flow p,
+.schema-compare p,
+.parameter-debug > div:first-child > p:last-of-type,
+.parameter-rule p {
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.responsibility-strip b {
+  font-size: 15px;
+}
+
+.argument-flow strong,
+.schema-compare p,
+.parameter-debug > div:first-child > p:last-of-type {
+  line-height: 1.65;
+}
+
+.argument-flow strong {
+  font-size: 13px;
+}
+
+.tool-call-output code {
+  font-size: 12.5px;
+  line-height: 1.65;
+}
