@@ -210,7 +210,153 @@ document.querySelector("[data-play-loop]").addEventListener("click", (event) => 
   }, 1050);
 });
 
+const rawCodeByElement = new WeakMap();
+const pythonKeywords = new Set([
+  "and", "as", "assert", "async", "await", "break", "case", "class", "continue",
+  "def", "del", "elif", "else", "except", "finally", "for", "from", "global",
+  "if", "import", "in", "is", "lambda", "match", "nonlocal", "not", "or",
+  "pass", "raise", "return", "try", "while", "with", "yield",
+]);
+const pythonBuiltins = new Set([
+  "dict", "enumerate", "float", "getattr", "int", "isinstance", "len", "list",
+  "open", "print", "range", "set", "str", "sum", "super", "tuple", "type", "zip",
+]);
+const pythonLiterals = new Set(["True", "False", "None"]);
+
+function escapeCode(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function codeToken(kind, value) {
+  return '<span class="token ' + kind + '">' + escapeCode(value) + "</span>";
+}
+
+function highlightPythonLine(line, state) {
+  let html = "";
+  let index = 0;
+  let expectFunction = false;
+
+  while (index < line.length) {
+    if (state.tripleQuote) {
+      const end = line.indexOf(state.tripleQuote, index);
+      if (end === -1) {
+        return html + codeToken("string", line.slice(index));
+      }
+      const finish = end + 3;
+      html += codeToken("string", line.slice(index, finish));
+      index = finish;
+      state.tripleQuote = null;
+      continue;
+    }
+
+    const rest = line.slice(index);
+    const triple = rest.slice(0, 3);
+    if (triple === '"""' || triple === "'''") {
+      const end = line.indexOf(triple, index + 3);
+      if (end === -1) {
+        state.tripleQuote = triple;
+        return html + codeToken("string", rest);
+      }
+      const finish = end + 3;
+      html += codeToken("string", line.slice(index, finish));
+      index = finish;
+      continue;
+    }
+
+    const character = line[index];
+
+    if (character === "#") {
+      return html + codeToken("comment", rest);
+    }
+
+    if (character === '"' || character === "'") {
+      let finish = index + 1;
+      while (finish < line.length) {
+        if (line[finish] === "\\") {
+          finish += 2;
+          continue;
+        }
+        finish += 1;
+        if (line[finish - 1] === character) break;
+      }
+      html += codeToken("string", line.slice(index, finish));
+      index = finish;
+      continue;
+    }
+
+    const decorator = rest.match(/^@[A-Za-z_]\w*/);
+    if (decorator) {
+      html += codeToken("decorator", decorator[0]);
+      index += decorator[0].length;
+      continue;
+    }
+
+    const number = rest.match(/^\b(?:0[xob][\da-f]+|\d+(?:\.\d+)?)\b/i);
+    if (number) {
+      html += codeToken("number", number[0]);
+      index += number[0].length;
+      continue;
+    }
+
+    const identifier = rest.match(/^[A-Za-z_]\w*/);
+    if (identifier) {
+      const word = identifier[0];
+      let kind = "";
+      if (expectFunction) kind = "function";
+      else if (pythonKeywords.has(word)) kind = "keyword";
+      else if (pythonBuiltins.has(word)) kind = "builtin";
+      else if (pythonLiterals.has(word)) kind = "literal";
+
+      html += kind ? codeToken(kind, word) : escapeCode(word);
+      expectFunction = word === "def";
+      index += word.length;
+      continue;
+    }
+
+    if (/[+\-*\/%=<>!|&^~:.,()[\]{}]/.test(character)) {
+      html += codeToken("operator", character);
+    } else {
+      html += escapeCode(character);
+    }
+    index += 1;
+  }
+
+  return html;
+}
+
+function highlightPythonCode(codeElement) {
+  const source = codeElement.textContent.replace(/^\n|\n$/g, "");
+  const state = { tripleQuote: null };
+  rawCodeByElement.set(codeElement, source);
+
+  codeElement.innerHTML = source
+    .split("\n")
+    .map((line, index) => {
+      const highlighted = highlightPythonLine(line, state) || " ";
+      return (
+        '<span class="code-line" data-line="' +
+        (index + 1) +
+        '">' +
+        highlighted +
+        "</span>"
+      );
+    })
+    .join("");
+
+  codeElement.classList.add("syntax-highlighted");
+  codeElement.setAttribute("aria-label", "Python 源代码");
+  codeElement.setAttribute("tabindex", "0");
+}
+
+document
+  .querySelectorAll('code[data-language="python"]')
+  .forEach(highlightPythonCode);
+
 function cleanCopiedCode(codeElement) {
+  if (rawCodeByElement.has(codeElement)) return rawCodeByElement.get(codeElement);
   if (!codeElement.classList.contains("line-numbers")) return codeElement.textContent;
   return [...codeElement.querySelectorAll(":scope > span")]
     .map((line) => line.textContent.replace(/^\d{2}/, ""))

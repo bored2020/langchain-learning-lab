@@ -2888,3 +2888,223 @@ code {
   font-size: 12.5px;
   line-height: 1.65;
 }
+
+/* Python 教程代码块：内置高亮、稳定行号与更清晰的阅读层次。 */
+.python-code {
+  overflow: hidden;
+  border-color: #cbd5df;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(35, 55, 70, 0.08);
+}
+
+.python-code .code-head {
+  height: 44px;
+  padding: 0 14px 0 16px;
+  color: #4b5f6c;
+  background: #e9eef2;
+  border-bottom-color: #cbd5df;
+}
+
+.python-code .code-head > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+}
+
+.python-code .code-head > span::before {
+  content: "PY";
+  padding: 3px 6px;
+  color: #ffffff;
+  background: #3776ab;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.python-code .code-head button {
+  min-width: 56px;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+.python-code pre {
+  margin: 0;
+  padding: 14px 0;
+  overflow: auto;
+  color: #273746;
+  background: #f8fafc;
+  scrollbar-color: #b4c0c9 #edf1f4;
+  scrollbar-width: thin;
+}
+
+.featured-code.python-code pre {
+  max-height: min(72vh, 760px);
+}
+
+.python-code code.language-python {
+  width: max-content;
+  min-width: 100%;
+  display: block;
+  padding: 0;
+  color: #273746;
+  background: transparent;
+  font-size: 13.5px;
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  tab-size: 4;
+}
+
+.python-code code:focus-visible {
+  outline: 2px solid #2f6fbb;
+  outline-offset: -2px;
+}
+
+.python-code .code-line {
+  position: relative;
+  min-height: 1.75em;
+  display: block;
+  padding: 0 26px 0 68px;
+  white-space: pre;
+  line-height: 1.75;
+}
+
+.python-code .code-line::before {
+  content: attr(data-line);
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 50px;
+  padding-right: 13px;
+  color: #9aa8b2;
+  border-right: 1px solid #dce3e8;
+  font-size: 11px;
+  text-align: right;
+  user-select: none;
+}
+
+.python-code .code-line:hover {
+  background: #edf4f9;
+}
+
+.token.keyword {
+  color: #7c3aed;
+  font-weight: 650;
+}
+
+.token.function {
+  color: #175cd3;
+  font-weight: 650;
+}
+
+.token.builtin {
+  color: #b42318;
+}
+
+.token.decorator {
+  color: #a1145a;
+  font-weight: 650;
+}
+
+.token.string {
+  color: #087a68;
+}
+
+.token.comment {
+  color: #71818d;
+  font-style: italic;
+}
+
+.token.number {
+  color: #b54708;
+}
+
+.token.literal {
+  color: #9333b8;
+  font-weight: 600;
+}
+
+.token.operator {
+  color: #526572;
+}
+
+html[data-theme="dark"] .python-code {
+  border-color: #3c4b55;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+}
+
+html[data-theme="dark"] .python-code .code-head {
+  color: #becbd3;
+  background: #202a31;
+  border-bottom-color: #3c4b55;
+}
+
+html[data-theme="dark"] .python-code pre,
+html[data-theme="dark"] .python-code code.language-python {
+  color: #d8e2e8;
+  background: #151d22;
+  scrollbar-color: #53636d #1c252b;
+}
+
+html[data-theme="dark"] .python-code .code-line::before {
+  color: #6f808a;
+  border-right-color: #344149;
+}
+
+html[data-theme="dark"] .python-code .code-line:hover {
+  background: #1d2a32;
+}
+
+html[data-theme="dark"] .token.keyword {
+  color: #c7a7ff;
+}
+
+html[data-theme="dark"] .token.function {
+  color: #75b7ff;
+}
+
+html[data-theme="dark"] .token.builtin {
+  color: #ff928a;
+}
+
+html[data-theme="dark"] .token.decorator {
+  color: #f09ac1;
+}
+
+html[data-theme="dark"] .token.string {
+  color: #72d5bf;
+}
+
+html[data-theme="dark"] .token.comment {
+  color: #83939d;
+}
+
+html[data-theme="dark"] .token.number {
+  color: #f4b66a;
+}
+
+html[data-theme="dark"] .token.literal {
+  color: #dda1f0;
+}
+
+html[data-theme="dark"] .token.operator {
+  color: #a8b7c0;
+}
+
+@media (max-width: 700px) {
+  .python-code code.language-python {
+    font-size: 12.5px;
+  }
+
+  .python-code .code-line {
+    padding-right: 18px;
+    padding-left: 56px;
+  }
+
+  .python-code .code-line::before {
+    width: 42px;
+    padding-right: 10px;
+  }
+}

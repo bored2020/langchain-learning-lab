@@ -385,9 +385,9 @@
                 <code>[{'name': 'get_weather', 'args': {'city': '广州'}}]</code>
               </div>
             </div>
-            <div class="code-block" data-code-block>
+            <div class="code-block python-code" data-code-block>
               <div class="code-head"><span>INSPECT_TOOL_CALL.PY</span><button type="button" data-copy>复制</button></div>
-              <pre><code>model_with_tools = model.bind_tools([get_weather])
+              <pre><code class="language-python" data-language="python">model_with_tools = model.bind_tools([get_weather])
 
 message = model_with_tools.invoke(
     "广州现在天气怎么样？"
@@ -482,9 +482,9 @@ OPENAI_MODEL=gpt-5-nano</code></pre>
               <p class="step-kicker">编写程序</p>
               <h3>创建 <code>main.py</code></h3>
               <p>代码中的 ①–⑦ 依次展示：工具 Schema 如何生成、广州如何进入参数、真实 API 如何被调用，以及 ToolMessage 如何回到模型。</p>
-              <div class="code-block featured-code" data-code-block>
+              <div class="code-block featured-code python-code" data-code-block>
                 <div class="code-head"><span>MAIN.PY</span><button type="button" data-copy>复制</button></div>
-                <pre><code>import json
+                <pre><code class="language-python" data-language="python">import json
 import os
 
 import requests
@@ -583,9 +583,9 @@ model = ChatOpenAI(
 # messages.append(
 #     ToolMessage(content=tool_result, tool_call_id=call["id"])
 # )  # 把结果与本次调用关联，再交给模型
-    model=model,
 
 agent = create_agent(
+    model=model,
     tools=[get_weather],
     system_prompt=(
         "你是天气与穿衣助手。天气问题必须调用 get_weather，"
