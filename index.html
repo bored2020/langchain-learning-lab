@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="一份从原理到第一个可运行 Agent 的 LangChain 中文交互式学习手册"
+    />
+    <title>LangChain 学习实验室 · 从原理到第一个 Agent</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+
+    <header class="mobile-header">
+      <a class="brand" href="#top" aria-label="返回顶部">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span>LANGCHAIN<br /><b>学习实验室</b></span>
+      </a>
+      <button class="menu-button" type="button" aria-expanded="false" aria-controls="sidebar">
+        <span></span><span></span>
+        <span class="sr-only">打开目录</span>
+      </button>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <a class="brand desktop-brand" href="#top">
+        <span class="brand-mark" aria-hidden="true">L</span>
+        <span>LANGCHAIN<br /><b>学习实验室</b></span>
+      </a>
+
+      <div class="course-meta">
+        <span>COURSE 001</span>
+        <span>约 45 分钟</span>
+      </div>
+
+      <nav class="toc" aria-label="课程目录">
+        <a href="#why" data-section="why"><span>01</span>它解决什么问题</a>
+        <a href="#mental-model" data-section="mental-model"><span>02</span>核心心智模型</a>
+        <a href="#agent-loop" data-section="agent-loop"><span>03</span>Agent 如何运转</a>
+        <a href="#build" data-section="build"><span>04</span>最小实例</a>
+        <a href="#decode" data-section="decode"><span>05</span>逐行拆解</a>
+        <a href="#next" data-section="next"><span>06</span>继续进阶</a>
+      </nav>
+
+      <div class="sidebar-progress">
+        <div class="progress-label">
+          <span>学习进度</span><strong data-progress-label>0%</strong>
+        </div>
+        <div class="progress-track"><i data-progress-bar></i></div>
+        <button class="reset-progress" type="button" data-reset-progress>重置进度</button>
+      </div>
+    </aside>
+
+    <main id="top">
+      <section class="hero section-shell" data-course-section="intro">
+        <div class="hero-copy">
+          <div class="eyebrow reveal">LANGCHAIN · PYTHON · 1.x</div>
+          <h1 class="reveal">
+            别急着背 API，<br />先看懂 <em>AI 应用</em><br />怎样运转。
+          </h1>
+          <p class="hero-lede reveal">
+            这是一份可以动手操作的 LangChain 入门手册。你会先建立正确的心智模型，
+            再亲手构建一个会调用工具的最小 Agent。
+          </p>
+          <div class="hero-actions reveal">
+            <a class="button button-primary" href="#why">开始学习 <span>↓</span></a>
+            <a class="button button-ghost" href="#build">直接看实例</a>
+          </div>
+          <div class="learning-contract reveal">
+            <span>学完你将能：</span>
+            <ul>
+              <li>说清 Model、Prompt、Tool、Agent 的关系</li>
+              <li>读懂一次 Agent 的完整执行循环</li>
+              <li>独立运行并修改第一个 LangChain 程序</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal" aria-label="LangChain 组件关系示意">
+          <div class="orbit orbit-one"></div>
+          <div class="orbit orbit-two"></div>
+          <div class="core-node">
+            <small>ORCHESTRATION</small>
+            <b>LANG<br />CHAIN</b>
+          </div>
+          <div class="satellite satellite-model"><i></i><span>MODEL</span></div>
+          <div class="satellite satellite-prompt"><i></i><span>PROMPT</span></div>
+          <div class="satellite satellite-tools"><i></i><span>TOOLS</span></div>
+          <div class="satellite satellite-memory"><i></i><span>STATE</span></div>
+          <span class="visual-caption">把模型接进真实世界</span>
+        </div>
+      </section>
+
+      <section class="chapter section-shell" id="why" data-course-section="why">
+        <header class="chapter-header reveal">
+          <span class="chapter-index">01</span>
+          <div>
+            <p class="kicker">WHY LANGCHAIN</p>
+            <h2>它不是模型，<br />而是模型外面的“应用层”。</h2>
+          </div>
+        </header>
+
+        <div class="definition-card reveal">
+          <p class="definition-label">一句话定义</p>
+          <p>
+            LangChain 是一套用于构建 <mark>大模型应用</mark> 的组件与运行框架：
+            它负责把模型、提示词、工具、数据和状态组织成一个可执行系统。
+          </p>
+        </div>
+
+        <div class="problem-grid">
+          <article class="problem-card reveal">
+            <span class="card-no">A</span>
+            <div class="mini-icon" aria-hidden="true">⌁</div>
+            <h3>只有模型</h3>
+            <p>能生成文字，却不知道你的私有资料，也不能主动查天气、访问数据库或调用业务接口。</p>
+            <div class="card-footer bad">封闭的概率引擎</div>
+          </article>
+          <article class="problem-card feature-card reveal">
+            <span class="card-no">B</span>
+            <div class="mini-icon" aria-hidden="true">⇄</div>
+            <h3>加上 LangChain</h3>
+            <p>统一消息格式、连接外部工具、维护执行状态，并让模型在需要时自主选择下一步。</p>
+            <div class="card-footer good">可组合的应用系统</div>
+          </article>
+          <article class="problem-card reveal">
+            <span class="card-no">C</span>
+            <div class="mini-icon" aria-hidden="true">◎</div>
+            <h3>最终得到</h3>
+            <p>问答助手、RAG 知识库、结构化信息提取、自动化工作流，以及能使用工具的 Agent。</p>
+            <div class="card-footer neutral">面向真实任务</div>
+          </article>
+        </div>
+
+        <aside class="note reveal">
+          <span class="note-tag">关键区别</span>
+          <p><b>Chain</b> 是开发者预先规定步骤；<b>Agent</b> 是模型根据当前上下文决定下一步。刚入门时，两者都要懂，但先从一条可预测的链开始，再进入 Agent。</p>
+        </aside>
+
+        <button class="complete-button" type="button" data-complete="why">
+          <span class="check-box">✓</span><span class="complete-text">标记本章已学完</span>
+        </button>
+      </section>
+
+      <section class="chapter section-shell dark-section" id="mental-model" data-course-section="mental-model">
+        <header class="chapter-header reveal">
+          <span class="chapter-index">02</span>
+          <div>
+            <p class="kicker">THE MENTAL MODEL</p>
+            <h2>五块积木，<br />组成一个 AI 应用。</h2>
+          </div>
+        </header>
+
+        <p class="section-intro reveal">点击每块积木，观察它在一次请求中扮演的角色。</p>
+
+        <div class="pipeline-lab reveal">
+          <div class="pipeline" role="tablist" aria-label="LangChain 核心组件">
+            <button class="pipeline-node active" data-component="prompt" role="tab" aria-selected="true">
+              <small>01</small><b>Prompt</b><span>组织上下文</span>
+            </button>
+            <i class="pipeline-arrow" aria-hidden="true">→</i>
+            <button class="pipeline-node" data-component="model" role="tab" aria-selected="false">
+              <small>02</small><b>Model</b><span>理解与决策</span>
+            </button>
+            <i class="pipeline-arrow" aria-hidden="true">→</i>
+            <button class="pipeline-node" data-component="tool" role="tab" aria-selected="false">
+              <small>03</small><b>Tool</b><span>连接真实世界</span>
+            </button>
+            <i class="pipeline-arrow" aria-hidden="true">→</i>
+            <button class="pipeline-node" data-component="state" role="tab" aria-selected="false">
+              <small>04</small><b>State</b><span>保存过程信息</span>
+            </button>
+            <i class="pipeline-arrow" aria-hidden="true">→</i>
+            <button class="pipeline-node" data-component="output" role="tab" aria-selected="false">
+              <small>05</small><b>Output</b><span>交付结果</span>
+            </button>
+          </div>
+          <div class="component-detail" aria-live="polite">
+            <div class="detail-index" data-detail-index>01</div>
+            <div>
+              <p class="detail-kind" data-detail-kind>INPUT LAYER</p>
+              <h3 data-detail-title>Prompt / Messages</h3>
+              <p data-detail-copy>把系统规则、用户问题、历史对话和检索内容，整理成模型能理解的消息列表。它决定模型此刻“看见什么”。</p>
+              <code data-detail-code>[("system", "你是天气助手"), ("user", question)]</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="under-hood reveal">
+          <div>
+            <span class="overline">统一接口</span>
+            <h3>为什么能像搭积木？</h3>
+          </div>
+          <p>
+            LangChain 把不同厂商模型、提示模板、检索器和工具包装为相似的可调用对象。
+            常见对象都支持 <code>invoke()</code>，很多还支持 <code>stream()</code>、<code>batch()</code> 和异步调用。
+            你因此可以替换组件，而不用重写整套业务逻辑。
+          </p>
+        </div>
+
+        <div class="ecosystem reveal">
+          <h3>三个名字，不要混淆</h3>
+          <div class="ecosystem-row">
+            <div><b>LangChain</b><span>高层组件与 Agent 开发入口</span></div>
+            <div><b>LangGraph</b><span>底层状态图与复杂工作流编排</span></div>
+            <div><b>LangSmith</b><span>调用链追踪、评测与线上观测</span></div>
+          </div>
+          <p class="ecosystem-caption">现在先学 LangChain；需要精细控制流程时学 LangGraph；准备调试与上线时接 LangSmith。</p>
+        </div>
+
+        <button class="complete-button on-dark" type="button" data-complete="mental-model">
+          <span class="check-box">✓</span><span class="complete-text">标记本章已学完</span>
+        </button>
+      </section>
+
+      <section class="chapter section-shell" id="agent-loop" data-course-section="agent-loop">
+        <header class="chapter-header reveal">
+          <span class="chapter-index">03</span>
+          <div>
+            <p class="kicker">THE AGENT LOOP</p>
+            <h2>Agent 的本质：<br />模型在一个循环里调用工具。</h2>
+          </div>
+        </header>
+
+        <div class="loop-layout">
+          <div class="loop-stage reveal">
+            <div class="loop-toolbar">
+              <span>执行轨迹 / TRACE</span>
+              <button type="button" data-play-loop><i></i><span>播放一次</span></button>
+            </div>
+            <div class="trace-list">
+              <article class="trace-step active" data-trace-step="0">
+                <span class="trace-dot">1</span>
+                <div><small>USER → AGENT</small><b>“上海今天穿什么？”</b><p>用户提出一个需要实时信息的问题。</p></div>
+              </article>
+              <article class="trace-step" data-trace-step="1">
+                <span class="trace-dot">2</span>
+                <div><small>MODEL → DECISION</small><b>不能凭空回答，需要查天气</b><p>模型根据工具描述，生成结构化工具调用。</p></div>
+              </article>
+              <article class="trace-step" data-trace-step="2">
+                <span class="trace-dot">3</span>
+                <div><small>AGENT → TOOL</small><b>get_weather(city="上海")</b><p>运行时真正执行 Python 函数。</p></div>
+              </article>
+              <article class="trace-step" data-trace-step="3">
+                <span class="trace-dot">4</span>
+                <div><small>TOOL → AGENT</small><b>“18°C，小雨，东北风 3 级”</b><p>工具结果作为新消息放回上下文。</p></div>
+              </article>
+              <article class="trace-step" data-trace-step="4">
+                <span class="trace-dot">5</span>
+                <div><small>MODEL → USER</small><b>“建议穿薄外套，并带伞。”</b><p>模型读到观察结果，组织最终答案并结束循环。</p></div>
+              </article>
+            </div>
+          </div>
+
+          <aside class="loop-explainer reveal">
+            <span class="loop-number" data-loop-number>01</span>
+            <p class="kicker" data-loop-kicker>INPUT</p>
+            <h3 data-loop-title>消息进入状态</h3>
+            <p data-loop-copy>Agent 收到的不是一条裸字符串，而是一组带角色的消息。运行时会把新消息加入本次执行状态。</p>
+            <div class="formula">
+              <span>Agent</span><b>=</b><span>Model</span><b>+</b><span>Harness</span>
+            </div>
+            <p class="microcopy">Harness 就是模型循环外的一切：提示词、工具、状态与中间件。</p>
+          </aside>
+        </div>
+
+        <div class="warning-card reveal">
+          <span>!</span>
+          <p><b>工具描述就是 Agent 的“说明书”。</b> 函数名、参数类型和 docstring 越准确，模型越容易在正确时机选择正确工具。工具返回的是数据，不应该偷偷夹带新的指令。</p>
+        </div>
+
+        <button class="complete-button" type="button" data-complete="agent-loop">
+          <span class="check-box">✓</span><span class="complete-text">标记本章已学完</span>
+        </button>
+      </section>
+
+      <section class="chapter section-shell build-section" id="build" data-course-section="build">
+        <header class="chapter-header reveal">
+          <span class="chapter-index">04</span>
+          <div>
+            <p class="kicker">BUILD IT</p>
+            <h2>从空文件夹到<br />第一个可用 Agent。</h2>
+          </div>
+        </header>
+
+        <div class="build-summary reveal">
+          <div><span>目标</span><b>天气穿衣助手</b></div>
+          <div><span>语言</span><b>Python 3.10+</b></div>
+          <div><span>核心包</span><b>LangChain 1.x</b></div>
+          <div><span>预计时间</span><b>10 分钟</b></div>
+        </div>
+
+        <div class="steps">
+          <article class="build-step reveal" id="step-1">
+            <div class="step-rail"><span>01</span><i></i></div>
+            <div class="step-content">
+              <p class="step-kicker">准备工作区</p>
+              <h3>创建目录与虚拟环境</h3>
+              <p>虚拟环境把本项目的依赖与系统 Python 隔离，避免版本互相污染。</p>
+              <div class="code-block" data-code-block>
+                <div class="code-head"><span>TERMINAL</span><button type="button" data-copy>复制</button></div>
+                <pre><code>mkdir my-first-agent
+cd my-first-agent
+python3 -m venv .venv
+source .venv/bin/activate</code></pre>
+              </div>
+              <p class="windows-tip">Windows PowerShell 激活命令：<code>.venv\Scripts\Activate.ps1</code></p>
+            </div>
+          </article>
+
+          <article class="build-step reveal" id="step-2">
+            <div class="step-rail"><span>02</span><i></i></div>
+            <div class="step-content">
+              <p class="step-kicker">安装依赖</p>
+              <h3>核心框架 + 模型适配器</h3>
+              <p><code>langchain</code> 提供 Agent 抽象；<code>langchain-openai</code> 负责连接 OpenAI 模型；<code>python-dotenv</code> 从本地文件读取密钥。</p>
+              <div class="code-block" data-code-block>
+                <div class="code-head"><span>TERMINAL</span><button type="button" data-copy>复制</button></div>
+                <pre><code>python -m pip install -U langchain langchain-openai python-dotenv</code></pre>
+              </div>
+              <div class="concept-line"><b>为什么拆包？</b><span>框架与模型厂商适配器独立升级，替换模型时更轻量。</span></div>
+            </div>
+          </article>
+
+          <article class="build-step reveal" id="step-3">
+            <div class="step-rail"><span>03</span><i></i></div>
+            <div class="step-content">
+              <p class="step-kicker">配置密钥</p>
+              <h3>创建 <code>.env</code></h3>
+              <p>把密钥放在环境变量中，不要硬编码进 Python，更不要提交到 Git。</p>
+              <div class="code-block" data-code-block>
+                <div class="code-head"><span>.ENV</span><button type="button" data-copy>复制</button></div>
+                <pre><code>OPENAI_API_KEY=替换为你的真实密钥
+OPENAI_MODEL=gpt-5-nano</code></pre>
+              </div>
+              <div class="security-note"><span>安全规则</span><p>同时创建 <code>.gitignore</code>，写入 <code>.env</code> 和 <code>.venv/</code>。</p></div>
+            </div>
+          </article>
+
+          <article class="build-step reveal" id="step-4">
+            <div class="step-rail"><span>04</span><i></i></div>
+            <div class="step-content">
+              <p class="step-kicker">编写程序</p>
+              <h3>创建 <code>main.py</code></h3>
+              <p>下面只有四件事：加载配置、定义工具、创建 Agent、发送消息。</p>
+              <div class="code-block featured-code" data-code-block>
+                <div class="code-head"><span>MAIN.PY</span><button type="button" data-copy>复制</button></div>
+                <pre class="line-numbers"><code><span><i>01</i>import os</span>
+<span><i>02</i>from dotenv import load_dotenv</span>
+<span><i>03</i>from langchain.agents import create_agent</span>
+<span><i>04</i>from langchain.tools import tool</span>
+<span><i>05</i>from langchain_openai import ChatOpenAI</span>
+<span><i>06</i></span>
+<span><i>07</i>load_dotenv()</span>
+<span><i>08</i></span>
+<span><i>09</i>@tool</span>
+<span><i>10</i>def get_weather(city: str) -&gt; str:</span>
+<span><i>11</i>    """查询指定城市的天气。"""</span>
+<span><i>12</i>    weather = {</span>
+<span><i>13</i>        "上海": "18°C，小雨，东北风 3 级",</span>
+<span><i>14</i>        "北京": "12°C，晴，西北风 2 级",</span>
+<span><i>15</i>    }</span>
+<span><i>16</i>    return weather.get(city, f"暂时没有{city}的天气数据")</span>
+<span><i>17</i></span>
+<span><i>18</i>model = ChatOpenAI(</span>
+<span><i>19</i>    model=os.getenv("OPENAI_MODEL", "gpt-5-nano")</span>
+<span><i>20</i>)</span>
+<span><i>21</i></span>
+<span><i>22</i>agent = create_agent(</span>
+<span><i>23</i>    model=model,</span>
+<span><i>24</i>    tools=[get_weather],</span>
+<span><i>25</i>    system_prompt=(</span>
+<span><i>26</i>        "你是穿衣助手。遇到天气问题必须先调用工具，"</span>
+<span><i>27</i>        "再根据结果给出一句简洁建议。"</span>
+<span><i>28</i>    ),</span>
+<span><i>29</i>)</span>
+<span><i>30</i></span>
+<span><i>31</i>result = agent.invoke({</span>
+<span><i>32</i>    "messages": [</span>
+<span><i>33</i>        {"role": "user", "content": "上海今天穿什么？"}</span>
+<span><i>34</i>    ]</span>
+<span><i>35</i>})</span>
+<span><i>36</i></span>
+<span><i>37</i>print(result["messages"][-1].content)</span></code></pre>
+              </div>
+            </div>
+          </article>
+
+          <article class="build-step reveal" id="step-5">
+            <div class="step-rail"><span>05</span></div>
+            <div class="step-content">
+              <p class="step-kicker">运行与验证</p>
+              <h3>观察最终回答</h3>
+              <div class="code-block" data-code-block>
+                <div class="code-head"><span>TERMINAL</span><button type="button" data-copy>复制</button></div>
+                <pre><code>python main.py</code></pre>
+              </div>
+              <div class="terminal-output">
+                <div class="terminal-dots"><i></i><i></i><i></i><span>EXPECTED OUTPUT</span></div>
+                <p><span>$</span> python main.py</p>
+                <p class="terminal-answer">上海今天 18°C 且有小雨，建议穿薄外套并带伞。</p>
+                <i class="cursor"></i>
+              </div>
+              <p class="output-note">文字不必一模一样。大模型输出具有随机性；只要答案使用了工具返回的天气并给出穿衣建议，就算成功。</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="download-note reveal">
+          <div><span>已替你准备好</span><h3>可运行文件就在本项目的 <code>example/</code> 中</h3></div>
+          <a href="example/main.py" download>查看源码 <span>↗</span></a>
+        </div>
+
+        <button class="complete-button" type="button" data-complete="build">
+          <span class="check-box">✓</span><span class="complete-text">我已经成功运行</span>
+        </button>
+      </section>
+
+      <section class="chapter section-shell decode-section" id="decode" data-course-section="decode">
+        <header class="chapter-header reveal">
+          <span class="chapter-index">05</span>
+          <div>
+            <p class="kicker">DECODE THE CODE</p>
+            <h2>代码很短，<br />但每一层都在工作。</h2>
+          </div>
+        </header>
+
+        <div class="decode-list reveal">
+          <details open>
+            <summary><span>01</span><b><code>@tool</code> 到底做了什么？</b><i>+</i></summary>
+            <div class="details-body">
+              <p>它把普通 Python 函数包装成模型可理解的工具规范，包含名称、用途和参数结构。模型不会直接执行函数，而是先生成“我要调用 get_weather，参数是上海”的结构化请求；Agent 运行时再负责真正执行。</p>
+              <div class="data-flow"><span>函数签名</span><b>→</b><span>JSON Schema</span><b>→</b><span>模型决策</span><b>→</b><span>Python 执行</span></div>
+            </div>
+          </details>
+          <details>
+            <summary><span>02</span><b><code>create_agent()</code> 创建了什么？</b><i>+</i></summary>
+            <div class="details-body">
+              <p>它创建的是一个基于 LangGraph 的执行图。核心循环是：调用模型 → 检查是否有工具调用 → 执行工具 → 把结果追加为消息 → 再次调用模型，直到模型产出最终回答。</p>
+            </div>
+          </details>
+          <details>
+            <summary><span>03</span><b><code>invoke()</code> 的输入输出是什么？</b><i>+</i></summary>
+            <div class="details-body">
+              <p>输入是状态字典，这里至少包含 <code>messages</code>。输出仍是状态字典，其中 <code>messages</code> 已追加模型决策、工具结果和最终回答。最后一个消息通常就是交付给用户的 AIMessage。</p>
+            </div>
+          </details>
+          <details>
+            <summary><span>04</span><b>为什么示例工具使用假数据？</b><i>+</i></summary>
+            <div class="details-body">
+              <p>为了把变量控制在最少。你此刻只需验证 Agent 是否会选工具、传参数、读取结果。掌握循环后，再把函数体换成真实天气 API；Agent 其余部分不用改变。</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="quiz reveal" data-quiz>
+          <div class="quiz-heading"><span>3 MIN CHECK</span><h3>确认你真的理解了</h3><p>如果用户问“北京天气”，究竟是谁执行 <code>get_weather</code>？</p></div>
+          <div class="quiz-options">
+            <button type="button" data-answer="wrong"><span>A</span>模型服务器直接执行</button>
+            <button type="button" data-answer="right"><span>B</span>本地的 Agent 运行时执行</button>
+            <button type="button" data-answer="wrong"><span>C</span>Prompt 模板执行</button>
+          </div>
+          <p class="quiz-feedback" aria-live="polite"></p>
+        </div>
+
+        <button class="complete-button" type="button" data-complete="decode">
+          <span class="check-box">✓</span><span class="complete-text">标记本章已学完</span>
+        </button>
+      </section>
+
+      <section class="chapter section-shell dark-section next-section" id="next" data-course-section="next">
+        <header class="chapter-header reveal">
+          <span class="chapter-index">06</span>
+          <div>
+            <p class="kicker">YOUR NEXT MOVES</p>
+            <h2>别横向刷 API，<br />沿着能力阶梯继续。</h2>
+          </div>
+        </header>
+
+        <div class="roadmap reveal">
+          <article class="roadmap-item current">
+            <span class="roadmap-marker">01</span>
+            <div><small>YOU ARE HERE</small><h3>模型 + Prompt + Tool</h3><p>能构建单轮 Agent，理解消息与工具循环。</p></div>
+            <b>今天</b>
+          </article>
+          <article class="roadmap-item">
+            <span class="roadmap-marker">02</span>
+            <div><small>NEXT</small><h3>结构化输出 + 流式响应</h3><p>让结果可靠进入程序，并改善用户等待体验。</p></div>
+            <b>第 2 天</b>
+          </article>
+          <article class="roadmap-item">
+            <span class="roadmap-marker">03</span>
+            <div><small>KNOWLEDGE</small><h3>RAG 检索增强</h3><p>文档切分、向量化、检索，把私有知识放进上下文。</p></div>
+            <b>第 3–4 天</b>
+          </article>
+          <article class="roadmap-item">
+            <span class="roadmap-marker">04</span>
+            <div><small>STATE</small><h3>记忆与 LangGraph</h3><p>持久化对话状态，构建分支、循环与人工审批。</p></div>
+            <b>第 5–7 天</b>
+          </article>
+          <article class="roadmap-item">
+            <span class="roadmap-marker">05</span>
+            <div><small>PRODUCTION</small><h3>LangSmith + 评测</h3><p>观察轨迹、建立数据集，用事实而非感觉改进应用。</p></div>
+            <b>上线前</b>
+          </article>
+        </div>
+
+        <div class="practice-card reveal">
+          <span class="practice-label">你的第一个练习</span>
+          <h3>把天气助手改成“双工具生活助手”</h3>
+          <p>新增一个 <code>get_outfit(style: str)</code> 工具，让 Agent 先查天气，再结合用户喜欢的风格给出搭配。</p>
+          <ol>
+            <li>写函数和准确的 docstring</li>
+            <li>把新工具放进 <code>tools=[...]</code></li>
+            <li>修改系统提示并观察调用轨迹</li>
+          </ol>
+        </div>
+
+        <div class="references reveal">
+          <p>继续学习时，以官方资料为准</p>
+          <a href="https://docs.langchain.com/oss/python/langchain/overview" target="_blank" rel="noreferrer">LangChain Overview <span>↗</span></a>
+          <a href="https://docs.langchain.com/oss/python/langchain/agents" target="_blank" rel="noreferrer">Agents Guide <span>↗</span></a>
+          <a href="https://docs.langchain.com/oss/python/integrations/chat/openai" target="_blank" rel="noreferrer">ChatOpenAI <span>↗</span></a>
+        </div>
+
+        <button class="complete-button on-dark" type="button" data-complete="next">
+          <span class="check-box">✓</span><span class="complete-text">完成整门入门课</span>
+        </button>
+      </section>
+
+      <footer class="site-footer">
+        <div class="footer-mark">L</div>
+        <div><b>LANGCHAIN 学习实验室</b><p>理解原理，然后亲手构建。</p></div>
+        <a href="#top">回到顶部 ↑</a>
+      </footer>
+    </main>
+
+    <div class="toast" role="status" aria-live="polite">已复制到剪贴板</div>
+    <script src="script.js"></script>
+  </body>
+</html>
