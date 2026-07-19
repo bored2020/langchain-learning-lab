@@ -1,3 +1,47 @@
+const themeStorageKey = "langchain-learning-theme";
+const themeToggle = document.querySelector("[data-theme-toggle]");
+const systemTheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+function getSavedTheme() {
+  try {
+    return localStorage.getItem(themeStorageKey);
+  } catch {
+    return null;
+  }
+}
+
+function updateThemeControl(theme) {
+  if (!themeToggle) return;
+  const isDark = theme === "dark";
+  themeToggle.setAttribute("aria-label", isDark ? "切换到浅色模式" : "切换到暗色模式");
+  themeToggle.setAttribute("aria-pressed", String(isDark));
+  themeToggle.querySelector("[data-theme-label]").textContent = isDark ? "浅色" : "暗色";
+}
+
+function applyTheme(theme, persist = false) {
+  document.documentElement.dataset.theme = theme;
+  updateThemeControl(theme);
+  if (persist) {
+    try {
+      localStorage.setItem(themeStorageKey, theme);
+    } catch {
+      // 浏览器禁用本地存储时，主题仍对当前页面有效。
+    }
+  }
+}
+
+const initialTheme = document.documentElement.dataset.theme || (systemTheme.matches ? "dark" : "light");
+applyTheme(initialTheme);
+
+themeToggle?.addEventListener("click", () => {
+  const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme, true);
+});
+
+systemTheme.addEventListener?.("change", (event) => {
+  if (!getSavedTheme()) applyTheme(event.matches ? "dark" : "light");
+});
+
 const componentData = {
   prompt: {
     index: "01",
